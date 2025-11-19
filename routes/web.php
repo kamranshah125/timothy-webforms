@@ -16,7 +16,7 @@ use App\Livewire\Forms\IntakeWizard;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/admin/login');
 });
 
 Route::get('/dashboard', function () {
@@ -35,13 +35,16 @@ require __DIR__ . '/auth.php';
 
 // =================
 
-Route::get('/form/{formType}/{token}', IntakeWizard::class)
+Route::get('/form/{formType}/{token?}', IntakeWizard::class)
     ->name('form.start');
 
-Route::get('/form/{formType}/thank-you', function ($formType) {
-    return view('forms.thank-you', compact('formType'));
+Route::get('/form/{formType}/thank-you', function($formType) {
+    return view('forms.thank-you', [
+        'formType' => $formType,
+    ]);
 })->name('form.complete.thankyou');
 
+    
 // Route::middleware('auth')->get('/form/{formType}', IntakeWizard::class)->name('form.start');
 
 
