@@ -20,6 +20,7 @@ class FormSubmission extends Model
         'status',
         'pdf_path',
         'resume_token',
+        'email_sent',
     ];
 
     protected $casts = [

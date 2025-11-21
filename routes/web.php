@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormController;
 use App\Livewire\Forms\IntakeWizard;
+ 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,11 +40,7 @@ require __DIR__ . '/auth.php';
 Route::get('/form/{formType}/{token?}', IntakeWizard::class)
     ->name('form.start');
 
-Route::get('/form/{formType}/thank-you', function($formType) {
-    return view('forms.thank-you', [
-        'formType' => $formType,
-    ]);
-})->name('form.complete.thankyou');
+Route::get('/form-submission/thank-you/{token}',[FormController::class, 'thankyouPage'] )->name('form.complete.thankyou');
 
     
 // Route::middleware('auth')->get('/form/{formType}', IntakeWizard::class)->name('form.start');

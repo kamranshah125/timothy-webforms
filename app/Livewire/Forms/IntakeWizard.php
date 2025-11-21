@@ -25,22 +25,103 @@ class IntakeWizard extends Component
     public $data = []; // current step values
     public $allData = []; // all saved form_data (page1, page2...)
 
+    // public function mount($formType, $token = null)
+    // {
+
+
+    //     $this->formType = $formType;
+    //     $this->token = $token;
+    //     $this->config = config("forms.{$this->formType}") ?? [];
+
+    //     $this->totalSteps = $this->config['steps'] ?? count($this->config['pages'] ?? []) ?: 1;
+
+    //     // If token provided -> resume mode (load submission by token)
+    //     if ($token) {
+
+    //         $submission = FormSubmission::where('resume_token', $token)->first();
+    //         if (! $submission) {
+    //             abort(403, 'Invalid or expired link.');
+    //         }
+
+    //         if ($submission->status == 'completed') {
+    //             return redirect()->route('form.complete.thankyou', [
+    //                 'token'=> $submission->resume_token
+    //             ]);
+    //         }
+
+
+    //         // auto-login if submission attached to a user
+    //         if (! Auth::check() && $submission->user_id) {
+    //             Auth::loginUsingId($submission->user_id);
+    //         }
+
+    //         $this->submission = $submission;
+    //         $this->allData = $submission->form_data ?? [];
+    //         $this->step = max(1, (int)($submission->current_step ?? 1));
+    //         $this->data = $this->allData["page{$this->step}"] ?? [];
+    //         return;
+    //     }
+
+    //     // No token (public entry) — allow access to page 1 without login
+    //     if (Auth::check()) {
+    //         // If user logged in, reuse or create a draft submission for them
+    //         $submission = FormSubmission::firstOrCreate(
+    //             ['user_id' => Auth::id(), 'form_type' => $this->formType, 'status' => 'draft'],
+    //             ['form_name' => $this->config['title'] ?? ucfirst($this->formType), 'resume_token' => (string) Str::uuid()]
+    //         );
+
+    //         $this->submission = $submission;
+    //         $this->allData = $submission->form_data ?? [];
+    //         $this->step = max(1, (int)($submission->current_step ?? 1));
+    //         $this->data = $this->allData["page{$this->step}"] ?? [];
+    //         return;
+    //     }
+
+    //     // Public anonymous user — start on step 1 with empty state
+    //     $this->submission = null;
+    //     $this->allData = [];
+    //     $this->step = 1;
+    //     $this->data = [];
+    // }
+
     public function mount($formType, $token = null)
     {
         $this->formType = $formType;
         $this->token = $token;
-        $this->config = config("forms.{$this->formType}") ?? [];
 
-        $this->totalSteps = $this->config['steps'] ?? count($this->config['pages'] ?? []) ?: 1;
+        // 🔥 STEP 1: Ensure config exists
+        $this->config = config("forms.{$this->formType}");
 
-        // If token provided -> resume mode (load submission by token)
+        if (!$this->config || empty($this->config['pages'])) {
+            abort(404, "Invalid form type or configuration missing.");
+        }
+
+        // total steps
+        $this->totalSteps = $this->config['steps'] ?? count($this->config['pages']) ?? 1;
+
+        // ---------------------------
+        // 🔥 RECOMMENDED IMPROVEMENT:
+        // If steps mismatch or pages missing → throw error
+        // ---------------------------
+        if (!isset($this->config['pages']) || !is_array($this->config['pages'])) {
+            abort(500, "Form configuration error: pages not defined.");
+        }
+
+        // ----------------------------------
+        // Existing token logic stays same
+        // ----------------------------------
         if ($token) {
             $submission = FormSubmission::where('resume_token', $token)->first();
             if (! $submission) {
                 abort(403, 'Invalid or expired link.');
             }
 
-            // auto-login if submission attached to a user
+            if ($submission->status == 'completed') {
+                return redirect()->route('form.complete.thankyou', [
+                    'token' => $submission->resume_token
+                ]);
+            }
+
             if (! Auth::check() && $submission->user_id) {
                 Auth::loginUsingId($submission->user_id);
             }
@@ -52,9 +133,8 @@ class IntakeWizard extends Component
             return;
         }
 
-        // No token (public entry) — allow access to page 1 without login
+        // if logged in user
         if (Auth::check()) {
-            // If user logged in, reuse or create a draft submission for them
             $submission = FormSubmission::firstOrCreate(
                 ['user_id' => Auth::id(), 'form_type' => $this->formType, 'status' => 'draft'],
                 ['form_name' => $this->config['title'] ?? ucfirst($this->formType), 'resume_token' => (string) Str::uuid()]
@@ -67,12 +147,92 @@ class IntakeWizard extends Component
             return;
         }
 
-        // Public anonymous user — start on step 1 with empty state
+        // public load
         $this->submission = null;
         $this->allData = [];
         $this->step = 1;
         $this->data = [];
     }
+
+//     public function mount($formType, $token = null)
+// {
+//     $this->formType = $formType;
+//     $this->token = $token;
+
+//     // -----------------------------
+//     // 1) Load Config
+//     // -----------------------------
+//     $this->config = config("forms.{$this->formType}");
+
+//     if (!$this->config || empty($this->config['pages'])) {
+//         abort(404, "Invalid form type or configuration missing.");
+//     }
+
+//     if (!isset($this->config['pages']) || !is_array($this->config['pages'])) {
+//         abort(500, "Form configuration error: pages not defined.");
+//     }
+
+//     // calculate steps
+//     $this->totalSteps = $this->config['steps'] 
+//         ?? count($this->config['pages']) 
+//         ?? 1;
+
+//     // --------------------------------------------
+//     // 2) TOKEN PRESENT → MUST BE LOGGED IN FIRST
+//     // --------------------------------------------
+//     if ($token) {
+
+//         // If NOT logged in → redirect to login (Breeze)
+//         if (!Auth::check()) {
+
+//             session([
+//                 'resume_form'  => $formType,
+//                 'resume_token' => $token,
+//             ]);
+
+//             return redirect()->route('login');
+//         }
+
+//         // Load submission
+//         $submission = FormSubmission::where('resume_token', $token)->first();
+
+//         if (!$submission) {
+//             abort(403, 'Invalid or expired resume link.');
+//         }
+
+//         // Completed? send to thank-you
+//         if ($submission->status === 'completed') {
+//             return redirect()->route('form.complete.thankyou', [
+//                 'token' => $submission->resume_token
+//             ]);
+//         }
+
+//         // Only the OWNER user can continue
+//         if ($submission->user_id !== Auth::id()) {
+//             abort(403, "You are not allowed to access this saved form.");
+//         }
+
+//         // Load all data
+//         $this->submission = $submission;
+//         $this->allData    = $submission->form_data ?? [];
+//         $this->step       = max(1, (int)($submission->current_step ?? 1));
+//         $this->data       = $this->allData["page{$this->step}"] ?? [];
+
+//         return;
+//     }
+
+//     // ----------------------------------------------------
+//     // 3) NO TOKEN → Public fresh entry (step 1 always)
+//     // ----------------------------------------------------
+//     $this->submission = null;
+//     $this->allData    = [];
+//     $this->step       = 1;
+//     $this->data       = [];
+// }
+
+
+   
+
 
     protected function currentPageConfig()
     {
@@ -462,6 +622,22 @@ class IntakeWizard extends Component
 
     public function goTo($n)
     {
+        // prevent going backward & forward without saving current page
+        if ($n == $this->step) return;
+
+        // Validate current step first
+        $page = $this->currentPageConfig();
+        $fields = $page['fields'] ?? [];
+        $rules = $this->buildValidationRules($fields);
+
+        if (!empty($rules)) {
+            $this->validate($rules);
+        }
+
+        // Save current step data
+        $this->saveStep();
+
+        // Now allow navigation
         if ($n >= 1 && $n <= $this->totalSteps) {
             $this->step = $n;
             $this->data = $this->allData["page{$this->step}"] ?? [];
@@ -493,7 +669,10 @@ class IntakeWizard extends Component
         // Mail::to('info@neurofitconnections.com')->send(new CompletionMail($this->submission));
 
         // redirect to a thank you view (route add in web.php)
-        return redirect()->route('form.complete.thankyou', ['formType' => $this->formType]);
+        // return redirect()->route('form.complete.thankyou', ['formType' => $this->formType]);
+        return redirect()->route('form.complete.thankyou', [
+            'token'    => $this->submission->resume_token
+        ]);
     }
 
     public function render()

@@ -29,8 +29,23 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // 👇 Resume link redirect (added)
+        if (session()->has('resume_token')) {
+            $form  = session('resume_form');
+            $token = session('resume_token');
+
+            session()->forget(['resume_form', 'resume_token']);
+
+            return redirect()->route('form.start', [
+                'formType' => $form,
+                'token'    => $token
+            ]);
+        }
+
+        // Breeze default redirect
         return redirect()->intended(RouteServiceProvider::HOME);
     }
+
 
     /**
      * Destroy an authenticated session.
