@@ -25,64 +25,8 @@ class IntakeWizard extends Component
     public $data = []; // current step values
     public $allData = []; // all saved form_data (page1, page2...)
 
-    // public function mount($formType, $token = null)
-    // {
 
 
-    //     $this->formType = $formType;
-    //     $this->token = $token;
-    //     $this->config = config("forms.{$this->formType}") ?? [];
-
-    //     $this->totalSteps = $this->config['steps'] ?? count($this->config['pages'] ?? []) ?: 1;
-
-    //     // If token provided -> resume mode (load submission by token)
-    //     if ($token) {
-
-    //         $submission = FormSubmission::where('resume_token', $token)->first();
-    //         if (! $submission) {
-    //             abort(403, 'Invalid or expired link.');
-    //         }
-
-    //         if ($submission->status == 'completed') {
-    //             return redirect()->route('form.complete.thankyou', [
-    //                 'token'=> $submission->resume_token
-    //             ]);
-    //         }
-
-
-    //         // auto-login if submission attached to a user
-    //         if (! Auth::check() && $submission->user_id) {
-    //             Auth::loginUsingId($submission->user_id);
-    //         }
-
-    //         $this->submission = $submission;
-    //         $this->allData = $submission->form_data ?? [];
-    //         $this->step = max(1, (int)($submission->current_step ?? 1));
-    //         $this->data = $this->allData["page{$this->step}"] ?? [];
-    //         return;
-    //     }
-
-    //     // No token (public entry) — allow access to page 1 without login
-    //     if (Auth::check()) {
-    //         // If user logged in, reuse or create a draft submission for them
-    //         $submission = FormSubmission::firstOrCreate(
-    //             ['user_id' => Auth::id(), 'form_type' => $this->formType, 'status' => 'draft'],
-    //             ['form_name' => $this->config['title'] ?? ucfirst($this->formType), 'resume_token' => (string) Str::uuid()]
-    //         );
-
-    //         $this->submission = $submission;
-    //         $this->allData = $submission->form_data ?? [];
-    //         $this->step = max(1, (int)($submission->current_step ?? 1));
-    //         $this->data = $this->allData["page{$this->step}"] ?? [];
-    //         return;
-    //     }
-
-    //     // Public anonymous user — start on step 1 with empty state
-    //     $this->submission = null;
-    //     $this->allData = [];
-    //     $this->step = 1;
-    //     $this->data = [];
-    // }
 
     public function mount($formType, $token = null)
     {
@@ -153,85 +97,6 @@ class IntakeWizard extends Component
         $this->step = 1;
         $this->data = [];
     }
-
-//     public function mount($formType, $token = null)
-// {
-//     $this->formType = $formType;
-//     $this->token = $token;
-
-//     // -----------------------------
-//     // 1) Load Config
-//     // -----------------------------
-//     $this->config = config("forms.{$this->formType}");
-
-//     if (!$this->config || empty($this->config['pages'])) {
-//         abort(404, "Invalid form type or configuration missing.");
-//     }
-
-//     if (!isset($this->config['pages']) || !is_array($this->config['pages'])) {
-//         abort(500, "Form configuration error: pages not defined.");
-//     }
-
-//     // calculate steps
-//     $this->totalSteps = $this->config['steps'] 
-//         ?? count($this->config['pages']) 
-//         ?? 1;
-
-//     // --------------------------------------------
-//     // 2) TOKEN PRESENT → MUST BE LOGGED IN FIRST
-//     // --------------------------------------------
-//     if ($token) {
-
-//         // If NOT logged in → redirect to login (Breeze)
-//         if (!Auth::check()) {
-
-//             session([
-//                 'resume_form'  => $formType,
-//                 'resume_token' => $token,
-//             ]);
-
-//             return redirect()->route('login');
-//         }
-
-//         // Load submission
-//         $submission = FormSubmission::where('resume_token', $token)->first();
-
-//         if (!$submission) {
-//             abort(403, 'Invalid or expired resume link.');
-//         }
-
-//         // Completed? send to thank-you
-//         if ($submission->status === 'completed') {
-//             return redirect()->route('form.complete.thankyou', [
-//                 'token' => $submission->resume_token
-//             ]);
-//         }
-
-//         // Only the OWNER user can continue
-//         if ($submission->user_id !== Auth::id()) {
-//             abort(403, "You are not allowed to access this saved form.");
-//         }
-
-//         // Load all data
-//         $this->submission = $submission;
-//         $this->allData    = $submission->form_data ?? [];
-//         $this->step       = max(1, (int)($submission->current_step ?? 1));
-//         $this->data       = $this->allData["page{$this->step}"] ?? [];
-
-//         return;
-//     }
-
-//     // ----------------------------------------------------
-//     // 3) NO TOKEN → Public fresh entry (step 1 always)
-//     // ----------------------------------------------------
-//     $this->submission = null;
-//     $this->allData    = [];
-//     $this->step       = 1;
-//     $this->data       = [];
-// }
-
-
-   
 
 
     protected function currentPageConfig()
@@ -346,86 +211,6 @@ class IntakeWizard extends Component
         return [$user, $submission, $generatedPassword];
     }
 
-    // public function saveStep()
-    // {
-    //     $page = $this->currentPageConfig();
-    //     $fields = $page['fields'] ?? [];
-
-    //     // Validate
-    //     $rules = $this->buildValidationRules($fields);
-    //     if (!empty($rules)) {
-    //         $this->validate($rules);
-    //     }
-
-    //     // Normalize checkboxes
-    //     $this->normalizeCheckboxGroups($fields);
-
-    //     // STEP 1 — Ensure user exists
-    //     $email = $this->data['email'] ?? null;
-    //     $name  = $this->data['name'] ?? ($this->data['full_name'] ?? null);
-
-    //     if ($email) {
-    //         $user = \App\Models\User::where('email', $email)->first();
-
-    //         if (! $user) {
-    //             // Create new user (Case A)
-    //             $password = Str::random(8);
-
-    //             $user = \App\Models\User::create([
-    //                 'name' => $name,
-    //                 'email' => $email,
-    //                 'password' => Hash::make($password),
-    //             ]);
-
-    //             $newAccount = true;
-    //         } else {
-    //             $newAccount = false;
-    //             $password = null;
-    //         }
-
-    //         Auth::login($user);
-    //     }
-
-    //     // STEP 2 — Ensure submission exists
-    //     if (! $this->submission) {
-    //         $this->submission = FormSubmission::create([
-    //             'user_id'      => $user->id ?? null,
-    //             'form_type'    => $this->formType,
-    //             'form_name'    => $this->config['title'] ?? ucfirst($this->formType),
-    //             'form_data'    => [],
-    //             'status'       => 'draft',
-    //             'resume_token' => (string) Str::uuid(),
-    //             'email_sent'   => false,
-    //         ]);
-    //     }
-
-    //     // Save page data
-    //     $this->allData["page{$this->step}"] = $this->data;
-
-    //     $this->submission->update([
-    //         'form_data'     => $this->allData,
-    //         'current_step'  => $this->step,
-    //         'user_id'       => $user->id ?? $this->submission->user_id,
-    //     ]);
-
-    //     // STEP 3 — Send email ONLY first time
-    //     if (! $this->submission->email_sent && $email) {
-
-    //         $resumeLink = route('form.start', [
-    //             'formType' => $this->formType,
-    //             'token'    => $this->submission->resume_token
-    //         ]);
-
-    //         // if new user → send password too
-    //         Mail::to($email)->send(
-    //             new \App\Mail\RegistrationMail($user, $resumeLink, $password)
-    //         );
-
-    //         $this->submission->update(['email_sent' => true]);
-    //     }
-
-    //     $this->dispatch('notify', message: 'Saved');
-    // }
 
     public function saveProgress()
     {
@@ -605,6 +390,7 @@ class IntakeWizard extends Component
         if ($this->step < $this->totalSteps) {
             $this->step++;
             $this->data = $this->allData["page{$this->step}"] ?? [];
+            $this->dispatch('scrollToTop');
             return;
         }
 
@@ -618,6 +404,7 @@ class IntakeWizard extends Component
             $this->step--;
             $this->data = $this->allData["page{$this->step}"] ?? [];
         }
+        $this->dispatch('scrollToTop');
     }
 
     public function goTo($n)

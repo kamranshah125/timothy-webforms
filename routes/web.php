@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormController;
 use App\Livewire\Forms\IntakeWizard;
- 
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +16,22 @@ use App\Livewire\Forms\IntakeWizard;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+
+
+Route::get('/sys_optimize', function () {
+
+    // Clear caches
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+
+    // Re-optimize 
+    Artisan::call('optimize');
+
+    return "<h2 style='padding:20px; background:#e7fff3; color:#00884a;'>✔ System optimized successfully!</h2>";
+});
 
 Route::get('/', function () {
     return redirect('/admin/login');

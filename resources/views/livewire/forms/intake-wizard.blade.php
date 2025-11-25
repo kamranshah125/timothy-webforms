@@ -8,11 +8,9 @@
     <div class="max-w-4xl mx-auto">
 
         {{-- Header with Title --}}
-
-
-        <div class="flex items-center justify-center flex-col gap-3">
+        <div class="flex items-center justify-center flex-col gap-3" >
             <img src="{{ asset('images/logo.png') }}" class="w-[150px] md:w-[180px]" alt="">
-            <div class="text-center mb-8">
+            <div class="text-center mb-8"  id="top">
                 <h1 class="text-3xl font-bold text-gray-700 mb-2">
                     {{ $this->config['title'] ?? ucfirst($formType) }}
                 </h1>
@@ -21,16 +19,13 @@
         </div>
 
         {{-- Modern Step Indicator --}}
-        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6" >
             <div class="flex items-center justify-between relative">
-                {{-- Progress Line --}}
                 <div class="absolute top-5 left-0 right-0 h-1 bg-gray-200 -z-10">
                     <div class="h-full bg-blue-600 transition-all duration-500"
-                        style="width: {{ (($step - 1) / max($totalSteps - 1, 1)) * 100 }}%">
-                    </div>
+                        style="width: {{ (($step - 1) / max($totalSteps - 1, 1)) * 100 }}%"></div>
                 </div>
 
-                {{-- Step Circles --}}
                 @for ($i = 1; $i <= $totalSteps; $i++)
                     <div class="flex flex-col items-center flex-1">
                         <button wire:click="goTo({{ $i }})"
@@ -47,7 +42,7 @@
                             @endif
                         </button>
                         <span class="text-xs mt-2 font-medium {{ $i == $step ? 'text-blue-600' : 'text-gray-500' }}">
-                            Step {{ $i }}
+                            Section {{ $i }}
                         </span>
                     </div>
                 @endfor
@@ -58,111 +53,109 @@
         <div class="bg-white rounded-xl shadow-lg p-8">
             <form wire:submit.prevent="next">
                 <div class="space-y-6">
-                    {{-- Dynamic Fields --}}
-                    @if ($pageConfig)
-                        @foreach ($pageConfig['fields'] as $field)
-                            @php
-                                $name = $field['name'];
-                                $value = $data[$name] ?? null;
-                            @endphp
+                    @if ($pageConfig && !empty($pageConfig['sections']))
+                        @foreach ($pageConfig['sections'] as $section)
+                            <h2
+                                class="text-lg font-bold text-sky-600 uppercase border-b pb-2 mb-4 mt-8 text-center border-blue-400">
+                                {{ $section['title'] ?? '' }}
+                            </h2>
 
-                            <div class="form-group">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    {{ $field['label'] ?? ucfirst($name) }}
-                                    @if (!empty($field['required']))
-                                        <span class="text-red-500 ml-1">*</span>
-                                    @endif
-                                </label>
 
-                                @switch($field['type'] ?? 'text')
-                                    @case('text')
-                                        <input wire:model.defer="data.{{ $name }}" type="text"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                            placeholder="Enter {{ strtolower($field['label'] ?? $name) }}" />
-                                    @break
+                            <div class="grid grid-cols-12 gap-y-6 gap-x-4">
+                                @foreach ($section['fields'] as $field)
+                                    @php
+                                        $name = $field['name'];
+                                        $value = $data[$name] ?? null;
+                                    @endphp
 
-                                    @case('email')
-                                        <input wire:model.defer="data.{{ $name }}" type="email"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                            placeholder="your@email.com" />
-                                    @break
+                                    <div
+                                        class="{{ in_array($field['type'] ?? '', ['text', 'email', 'number', 'date']) ? 'col-span-12 md:col-span-6' : 'col-span-12' }}">
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                            {{ $field['label'] ?? ucfirst($name) }}
+                                            @if (!empty($field['required']))
+                                                <span class="text-red-500">*</span>
+                                            @endif
+                                        </label>
 
-                                    @case('date')
-                                        <input wire:model.defer="data.{{ $name }}" type="date"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
-                                    @break
+                                        @switch($field['type'] ?? 'text')
+                                            {{-- TEXT (2 COLUMN) --}}
+                                            @case('text')
+                                                <input wire:model.defer="data.{{ $name }}" type="text"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="Enter {{ strtolower($field['label'] ?? $name) }}" />
+                                            @break
 
-                                    @case('number')
-                                        <input wire:model.defer="data.{{ $name }}" type="number"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                            placeholder="Enter number" />
-                                    @break
+                                            {{-- EMAIL FULL WIDTH --}}
+                                            @case('email')
+                                                <input wire:model.defer="data.{{ $name }}" type="email"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="your@email.com" />
+                                            @break
 
-                                    @case('textarea')
-                                        <textarea wire:model.defer="data.{{ $name }}"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                            rows="4" placeholder="Enter details..."></textarea>
-                                    @break
+                                            {{-- DATE FULL WIDTH --}}
+                                            @case('date')
+                                                <input wire:model.defer="data.{{ $name }}" type="date"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                            @break
 
-                                    @case('checkbox-group')
-                                        <div class="space-y-3 mt-3">
-                                            @foreach ($field['options'] as $optKey => $optLabel)
-                                                <label
-                                                    class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
-                                                    <input type="checkbox"
-                                                        wire:model="data.{{ $name }}.{{ $optKey }}"
-                                                        value="1"
-                                                        class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" />
-                                                    <span class="ml-3 text-gray-700">{{ $optLabel }}</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                    @break
+                                            {{-- NUMBER FULL WIDTH --}}
+                                            @case('number')
+                                                <input wire:model.defer="data.{{ $name }}" type="number"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                            @break
 
-                                    @case('radio')
-                                    @case('radio-score')
-                                        <div class="space-y-3 mt-3">
-                                            @foreach ($field['options'] as $optKey => $optLabel)
-                                                <label
-                                                    class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
-                                                    <input type="radio" name="data_{{ $name }}"
-                                                        wire:model="data.{{ $name }}" value="{{ $optKey }}"
-                                                        class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500" />
-                                                    <span class="ml-3 text-gray-700">{{ $optLabel }}</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                    @break
+                                            {{-- TEXTAREA FULL WIDTH (unchanged) --}}
+                                            @case('textarea')
+                                                <textarea wire:model.defer="data.{{ $name }}" rows="4"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="Enter details..."></textarea>
+                                            @break
 
-                                    @default
-                                        <input wire:model.defer="data.{{ $name }}" type="text"
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
-                                @endswitch
+                                            {{-- CHECKBOX FULL WIDTH --}}
+                                            @case('checkbox-group')
+                                                <div class="space-y-3 mt-3">
+                                                    @foreach ($field['options'] as $optKey => $optLabel)
+                                                        <label
+                                                            class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                                                            <input type="checkbox"
+                                                                wire:model="data.{{ $name }}.{{ $optKey }}"
+                                                                value="1"
+                                                                class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2" />
+                                                            <span class="ml-3 text-gray-700">{{ $optLabel }}</span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            @break
 
-                                @error("data.{$name}")
-                                    <div class="flex items-center mt-2 text-sm text-red-600">
-                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd"
-                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        {{ $message }}
+                                            {{-- RADIO 2 COLUMN ALWAYS --}}
+                                            @case('radio')
+                                            @case('radio-score')
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                                    @foreach ($field['options'] as $optKey => $optLabel)
+                                                        <label
+                                                            class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                                                            <input type="radio" name="data_{{ $name }}"
+                                                                wire:model="data.{{ $name }}"
+                                                                value="{{ $optKey }}"
+                                                                class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-2" />
+                                                            <span class="ml-3 text-gray-700">{{ $optLabel }}</span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            @break
+
+                                            @default
+                                                <input wire:model.defer="data.{{ $name }}" type="text"
+                                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+                                        @endswitch
+
+                                        @error("data.{$name}")
+                                            <div class="text-sm text-red-600 mt-2">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                @enderror
+                                @endforeach
                             </div>
                         @endforeach
-
-                        {{-- Fallback Manual Fields --}}
-                    @else
-                        <div class="form-group">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                            <input wire:model.defer="data.full_name" type="text"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Enter your full name" />
-                            @error('data.full_name')
-                                <div class="text-sm text-red-600 mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
                     @endif
                 </div>
 
@@ -182,7 +175,6 @@
                     </div>
 
                     <div class="flex space-x-3">
-                        {{-- Save Button --}}
                         <button type="button" wire:click="saveProgress" wire:loading.attr="disabled"
                             class="px-6 py-3 bg-sky-300 text-gray-800 font-medium rounded-lg hover:bg-sky-500 transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span wire:loading.remove wire:target="saveProgress">
@@ -203,7 +195,6 @@
                             <span>Save Progress</span>
                         </button>
 
-                        {{-- Next/Finish Button --}}
                         <button type="submit" wire:loading.attr="disabled"
                             class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span wire:loading.remove wire:target="next">
@@ -237,25 +228,61 @@
                     </div>
                 </div>
             </form>
-        </div>
 
-        {{-- Success Toast --}}
-        <div x-data="{ show: false }" x-on:notify.window="show = true; setTimeout(() => show = false, 3000)"
-            x-show="show" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 transform translate-y-2"
-            x-transition:enter-end="opacity-100 transform translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 transform translate-y-0"
-            x-transition:leave-end="opacity-0 transform translate-y-2"
-            class="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center"
-            style="display: none;">
-            <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd" />
-            </svg>
-            <span class="font-medium">Progress saved successfully!</span>
+            {{-- Success Toast --}}
+            <div x-data="{ show: false }" x-on:notify.window="show = true; setTimeout(() => show = false, 3000)"
+                x-show="show" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 transform translate-y-2"
+                x-transition:enter-end="opacity-100 transform translate-y-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 transform translate-y-0"
+                x-transition:leave-end="opacity-0 transform translate-y-2"
+                class="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center"
+                style="display: none;">
+                <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">Progress saved successfully!</span>
+            </div>
         </div>
-
     </div>
+
+<script>
+    document.addEventListener('scrollToTop', () => {
+        const el = document.getElementById('top');
+        if (el) {
+            el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+</script>
+
+
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
