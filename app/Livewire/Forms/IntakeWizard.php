@@ -25,9 +25,7 @@ class IntakeWizard extends Component
     public $data = []; // current step values
     public $allData = []; // all saved form_data (page1, page2...)
 
-
-
-
+ 
     public function mount($formType, $token = null)
     {
         $this->formType = $formType;
@@ -60,12 +58,12 @@ class IntakeWizard extends Component
                 abort(403, 'Invalid or expired link.');
             }
 
-            if ($submission->status == 'completed') {
-                return redirect()->route('form.complete.thankyou', [
-                    'token' => $submission->resume_token
-                ]);
-            }
-
+            // if ($submission->status == 'completed') {
+            //     return redirect()->route('form.complete.thankyou', [
+            //         'token' => $submission->resume_token
+            //     ]);
+            // }
+ 
             if (! Auth::check() && $submission->user_id) {
                 Auth::loginUsingId($submission->user_id);
             }

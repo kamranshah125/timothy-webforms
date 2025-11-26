@@ -29,19 +29,20 @@ class FormPdfService
         // ------------ Ensure Folder Exists ------------
         $folder = public_path('forms');
 
-        if (! is_dir($folder)) {
+        if (!is_dir($folder)) {
             mkdir($folder, 0755, true);
         }
 
         // ------------ File Name & Path ------------
-        $fileName   = "submission_{$submission->id}.pdf";
-        $relative   = "forms/{$fileName}";
-        $fullPath   = public_path($relative);
+        $fileName = "submission_{$submission->id}.pdf";
+        $relative = "forms/{$fileName}";
+        $fullPath = public_path($relative);
 
         // ------------ Generate & Save PDF ------------
         try {
             Pdf::view('pdf.intake', $data)
-                ->margins(10, 10, 10, 10)
+                ->format('letter')
+                ->margins(12, 12, 14, 12)   // top, right, bottom, left (mm)
                 ->save($fullPath);
         } catch (\Throwable $e) {
             Log::error("PDF save error for submission {$submission->id}: " . $e->getMessage());
